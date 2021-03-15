@@ -24,7 +24,7 @@ def receiver(client, addr):
         data, data_len = net.receive(reader)
         if not data:
             break
-        print('received ', data_len)  # 이미지 처리
+        # print('received ', data_len)  # 이미지 처리
         # AI 알고리즘 처리 - 불량 여부 판단... 여기에 넣으면됭
         show_image(data)
         result = json.dumps({'result': 'ok'})

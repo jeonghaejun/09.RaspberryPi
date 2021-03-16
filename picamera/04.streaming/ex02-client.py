@@ -10,8 +10,9 @@ from time import sleep
 import picamera
 import datetime
 import socket
+import struct
+import threading
 import io
-import json
 import net
 
 HOST = '192.168.0.4'
@@ -24,12 +25,34 @@ camera = picamera.PiCamera()
 camera.resolution = (640, 480)
 camera.vflip = True
 
+def vido_streaming():
+    with socket.socket() as s:
+        s.connect((HOST,PORT))
+        writer = s.makefile('wb')
+        reader = s.makefile('rb')
+        stream=io.BytesIO()
+
+        for _ in camera.capture_continuous(stream,'jpeg',use_video_port=True):
+            image=stream.getvalue()
+
+            net.send(writer,image)
+            result=net.receive(reader)[0]
+            stream.seek(0)
+            stream.truncate()
+
+            if not motion.value:
+                writer.write(struct.pack('<L',0))
+                writer.flush()
+                break
+
+
 
 def start_record():
     led.on()
     now = datetime.datetime.now()
     fname = now.strftime("%Y%m%d_%H%M")+'.h264'
     camera.start_recording(fname)
+    threading.Thread(target=vido_streaming).start()
     print('recording ', fname)
 
 
